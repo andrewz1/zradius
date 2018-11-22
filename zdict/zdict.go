@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// Тип шифрования для аттрибута
+// Encryprion type for Attr
 const (
 	EncNone int = iota // No encryption
 	EncUsr             // User-Password encryption
@@ -13,9 +13,10 @@ const (
 	EncAsc             // Ascend’s proprietary encryption
 )
 
-// Тип данных для аттрибута
+// Data type for Attr
 const (
-	TypeString int = iota // string
+	TypeRaw    int = iota // byte slice
+	TypeString            // string
 	TypeIP4               // ip addr
 	TypeIP4Pfx            // 6 bytes
 	TypeInt               // uint32
@@ -29,10 +30,9 @@ const (
 	TypeShort             // uint16
 	TypeSInt              // signed int
 	TypeVSA               // VSA
-	TypeRaw               // byte slice
 )
 
-// Различные константы
+// RFC constants
 const (
 	AttrVSA = 26
 
@@ -58,36 +58,23 @@ const (
 	CoANAK             = 45
 )
 
-// AttrData - структура для хранения характеристик аттрибута в словаре
+// AttrData - dictionary entry for Attr
 type AttrData struct {
-	Name string // имя аттрибута
-	Typ  byte   // тип аттрибута
-	Vid  uint32 // VendorID если Typ == 26
-	Vtyp byte   // VendorType если Typ == 26
-
-	Dtyp int  // тип данных
-	Tag  bool // тэгированный аттрибут или нет
-	Enc  int  // тип шифрования
-}
-
-// мапа для поиска по имени
-type attrBinMap struct {
-	sync.RWMutex
-	m map[string]*AttrData
-}
-
-// мапа для поиска по данным из пакета
-type attrStrMap struct {
-	sync.RWMutex
-	m map[uint64]*AttrData
+	Name string // Attr name
+	Typ  byte   // Attr type
+	Vid  uint32 // VendorID if Typ == AttrVSA
+	Vtyp byte   // VendorType if Typ == AttrVSA
+	Dtyp int    // Attr data type
+	Tag  bool   // Is Attr tagged
+	Enc  int    // Encription type
 }
 
 var (
-	s2bMap = attrBinMap{m: map[string]*AttrData{}}
-	b2sMap = attrStrMap{m: map[uint64]*AttrData{}}
+	strMap sync.Map // map by name
+	binMap sync.Map // map by attr data
 )
 
-// makeKey - функция генерации ключа для map-ы strMap из данных аттрибута
+// makeKey - generate key for binary map
 func makeKey(typ byte, vid uint32, vtyp byte) uint64 {
 	if typ != AttrVSA {
 		return uint64(typ)
@@ -95,7 +82,7 @@ func makeKey(typ byte, vid uint32, vtyp byte) uint64 {
 	return (uint64(vid) << 16) | (uint64(vtyp) << 8) | uint64(typ)
 }
 
-// добавление аттрибута в базу
+// add Attr to maps
 func addAttrGeneric(typ byte, vid uint32, vtyp byte, name string, dtyp int, tag bool, enc int) {
 	skey := strings.ToLower(name)
 	bkey := makeKey(typ, vid, vtyp)
@@ -108,60 +95,56 @@ func addAttrGeneric(typ byte, vid uint32, vtyp byte, name string, dtyp int, tag 
 		Tag:  tag,
 		Enc:  enc,
 	}
-	b2sMap.Lock()
-	b2sMap.m[bkey] = adata
-	b2sMap.Unlock()
-	s2bMap.Lock()
-	s2bMap.m[skey] = adata
-	s2bMap.Unlock()
+	binMap.Store(bkey, adata)
+	strMap.Store(skey, adata)
 }
 
+// add VSA to dictionary
 func addVSA(vid uint32, vtyp byte, name string, dtyp int) {
 	addAttrGeneric(AttrVSA, vid, vtyp, name, dtyp, false, EncNone)
 }
 
+// add VSA with tag and enc to dictionary
 func addVSA2(vid uint32, vtyp byte, name string, dtyp int, tag bool, enc int) {
 	addAttrGeneric(AttrVSA, vid, vtyp, name, dtyp, tag, enc)
 }
 
+// add plain Attr to dictionary
 func addAttr(typ byte, name string, dtyp int) {
 	addAttrGeneric(typ, 0, 0, name, dtyp, false, EncNone)
 }
 
+// add plain Attr with tag and enc
 func addAttr2(typ byte, name string, dtyp int, tag bool, enc int) {
 	addAttrGeneric(typ, 0, 0, name, dtyp, tag, enc)
 }
 
-// FindAttrBin - поиск обычного атрибута по типу
-func FindAttrBin(typ byte) (ret *AttrData) {
+// FindAttrBin - find plain Attr by type
+func FindAttrBin(typ byte) *AttrData {
 	return FindAllAttrBin(typ, 0, 0)
 }
 
-// FindVSABin - поиск VSA по VendorID и VendorType
-func FindVSABin(vid uint32, vtyp byte) (ret *AttrData) {
+// FindVSABin - find VSA by VendorID and VendorType
+func FindVSABin(vid uint32, vtyp byte) *AttrData {
 	return FindAllAttrBin(AttrVSA, vid, vtyp)
 }
 
-// FindAllAttrBin - поиск любого атрибута по всем параметрам
-func FindAllAttrBin(typ byte, vid uint32, vtyp byte) (ret *AttrData) {
+// FindAllAttrBin - find any Attr by binary params
+func FindAllAttrBin(typ byte, vid uint32, vtyp byte) *AttrData {
 	k := makeKey(typ, vid, vtyp)
-	b2sMap.RLock()
-	ret, ok := b2sMap.m[k]
-	b2sMap.RUnlock()
+	v, ok := binMap.Load(k)
 	if !ok {
 		return nil
 	}
-	return ret
+	return v.(*AttrData)
 }
 
-// FindAttrName - поиск аттрибута по имени
-func FindAttrName(name string) (ret *AttrData) {
+// FindAttrName - find any attr by name
+func FindAttrName(name string) *AttrData {
 	k := strings.ToLower(name)
-	s2bMap.RLock()
-	ret, ok := s2bMap.m[k]
-	s2bMap.RUnlock()
+	v, ok := strMap.Load(k)
 	if !ok {
 		return nil
 	}
-	return ret
+	return v.(*AttrData)
 }
