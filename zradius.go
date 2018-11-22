@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"hash"
 	"net"
-	"zradius/zdict"
 	"sync"
+
+	"github.com/andrewz1/zradius/zdict"
 )
 
 // основные константы из RFC
