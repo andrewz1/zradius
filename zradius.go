@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"hash"
 	"net"
-	"rad-tst/zdict"
+	"zradius/zdict"
 	"sync"
 )
 
