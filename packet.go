@@ -278,3 +278,35 @@ func (pkt *Packet) GetAttr(name string) *Attr {
 	}
 	return nil
 }
+
+func (pkt *Packet) AddAttr(name string, v interface{}) error {
+	var (
+		ad   *zdict.AttrData
+		attr *Attr
+	)
+
+	if ad = zdict.FindAttrName(name); ad == nil {
+		return fmt.Errorf("Attribute %s not found", name)
+	}
+	attr = &Attr{
+		typ:  ad.Typ,
+		vid:  ad.Vid,
+		vtyp: ad.Vtyp,
+		atyp: ad,
+	}
+	defer attr.updateLen()
+	if v == nil {
+		return nil
+	}
+	switch ad.Dtyp {
+	case zdict.TypeRaw:
+		if t, ok := v.([]byte); ok {
+			attr.data = t
+		}
+	case zdict.TypeString:
+		if t, ok := v.([]byte); ok {
+			attr.data = t
+		}
+	}
+	return nil
+}

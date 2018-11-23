@@ -101,3 +101,13 @@ func (attr *Attr) GetEData(pkt *Packet) interface{} {
 	}
 	return attr.edata
 }
+
+func (attr *Attr) updateLen() {
+	if attr.typ == zdict.AttrVSA {
+		attr.vlen = byte(len(attr.data) + 2)
+		attr.len = attr.vlen + 6
+	} else {
+		attr.vlen = 0
+		attr.len = byte(len(attr.data) + 2)
+	}
+}
