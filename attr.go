@@ -21,6 +21,7 @@ type Attr struct {
 	data  []byte          // raw attr data
 	edata interface{}     // evaluated attr data
 	atyp  *zdict.AttrData // Attr data from dictionary, nil if not found in dictionary
+	dcr   bool            // "decrypted" flag for encrypted Attr
 }
 
 // decrypt User-Password attr
@@ -32,6 +33,12 @@ func (attr *Attr) decryptUsr(pkt *Packet) {
 		dst        []byte
 	)
 
+	if attr.dcr {
+		return
+	}
+	defer func() {
+		attr.dcr = true
+	}()
 	if l = len(attr.data); (l % 16) != 0 {
 		return
 	}
