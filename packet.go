@@ -261,16 +261,19 @@ func (pkt *Packet) GetCode() byte {
 // GetAttr - search attribute by name
 func (pkt *Packet) GetAttr(name string) *Attr {
 	var (
-		ad *zdict.AttrData
-		at *Attr
+		ad   *zdict.AttrData
+		attr *Attr
 	)
 
 	if ad = zdict.FindAttrName(name); ad == nil {
 		return nil
 	}
-	for _, at = range pkt.attr {
-		if at.atyp == ad {
-			return at
+	for _, attr = range pkt.attr {
+		if attr.atyp == ad {
+			if attr.atyp.Enc == zdict.EncUsr {
+				attr.decryptUsr(pkt)
+			}
+			return attr
 		}
 	}
 	return nil
