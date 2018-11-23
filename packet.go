@@ -257,3 +257,21 @@ func (pkt *Packet) SetSecret(v interface{}) {
 func (pkt *Packet) GetCode() byte {
 	return pkt.code
 }
+
+// GetAttr - search attribute by name
+func (pkt *Packet) GetAttr(name string) *Attr {
+	var (
+		ad *zdict.AttrData
+		at *Attr
+	)
+
+	if ad = zdict.FindAttrName(name); ad == nil {
+		return nil
+	}
+	for _, at = range pkt.attr {
+		if at.atyp == ad {
+			return at
+		}
+	}
+	return nil
+}

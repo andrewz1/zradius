@@ -75,17 +75,3 @@ func (pkt *Packet) GetNasU32() uint32 {
 	}
 	return binary.BigEndian.Uint32(ip4)
 }
-
-// GetAttrByName - поиск аттрибута в пакете по имени
-func (pkt *Packet) GetAttrByName(name string) (attr *Attr, err error) {
-	ad := zdict.FindAttrName(name)
-	if ad == nil {
-		return nil, fmt.Errorf("Unknown attribute: %s", name)
-	}
-	for _, at := range pkt.attr {
-		if at.atyp == ad {
-			return at, nil
-		}
-	}
-	return nil, fmt.Errorf("Attribute %s not found", name)
-}
