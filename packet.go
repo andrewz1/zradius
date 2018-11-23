@@ -242,6 +242,9 @@ func (pkt *Packet) RadReply(code byte) *Packet {
 
 // SetSecret - set Radius shared secret for packet
 func (pkt *Packet) SetSecret(v interface{}) {
+	if v == nil {
+		return
+	}
 	switch v.(type) {
 	case string:
 		pkt.secret = []byte(v.(string))
