@@ -241,16 +241,13 @@ func (pkt *Packet) RadReply(code byte) *Packet {
 }
 
 // SetSecret - set Radius shared secret for packet
-func (pkt *Packet) SetSecret(v interface{}) {
-	if v == nil {
-		return
-	}
-	switch v.(type) {
-	case string:
-		pkt.secret = []byte(v.(string))
-	case []byte:
-		pkt.secret = v.([]byte)
-	}
+func (pkt *Packet) SetSecret(s []byte) {
+	pkt.secret = s
+}
+
+// SetSecretStr - set Radius shared secret for packet
+func (pkt *Packet) SetSecretStr(s string) {
+	pkt.secret = []byte(s)
 }
 
 // GetCode - get Radius packet code
@@ -279,8 +276,8 @@ func (pkt *Packet) GetAttr(name string) *Attr {
 	return nil
 }
 
-// AddAttr - add Attr to packet
-func (pkt *Packet) AddAttr(name string, v interface{}) (err error) {
+// AddAttrRaw - add raw Attr to packet
+func (pkt *Packet) AddAttrRaw(name string, val []byte) error {
 	var (
 		ad   *zdict.AttrData
 		attr *Attr
@@ -293,64 +290,32 @@ func (pkt *Packet) AddAttr(name string, v interface{}) (err error) {
 		typ:  ad.Typ,
 		vid:  ad.Vid,
 		vtyp: ad.Vtyp,
+		data: val,
 		atyp: ad,
 	}
-	defer func() {
-		if err == nil {
-			attr.updateLen()
-			pkt.attr = append(pkt.attr, attr)
-		}
-	}()
-	if v == nil {
-		return
+	attr.updateLen()
+	pkt.attr = append(pkt.attr, attr)
+	return nil
+}
+
+// AddAttrStr - add string Attr to packet
+func (pkt *Packet) AddAttrStr(name, val string) error {
+	return pkt.AddAttrRaw(name, []byte(val))
+}
+
+// AddAttrInt - add int Attr to packet
+func (pkt *Packet) AddAttrInt(name string, val uint32) error {
+	var t [4]byte
+
+	binary.BigEndian.PutUint32(t[:], val)
+	return pkt.AddAttrRaw(name, t[:])
+}
+
+// AddAttrIP4 - add IPv4 Attr to packet
+func (pkt *Packet) AddAttrIP4(name string, val net.IP) error {
+	t := val.To4()
+	if t == nil {
+		return fmt.Errorf("Argument is not IPv4")
 	}
-	switch ad.Dtyp {
-	case zdict.TypeRaw:
-		fallthrough
-	case zdict.TypeString:
-		switch v.(type) {
-		case []byte:
-			attr.data = v.([]byte)
-		case string:
-			attr.data = []byte(v.(string))
-		default:
-			err = fmt.Errorf("Invalid attr value")
-			return
-		}
-	case zdict.TypeIP4:
-		switch v.(type) {
-		case *net.IP:
-			t := v.(*net.IP).To4()
-			if t == nil {
-				err = fmt.Errorf("Invalid attr value")
-				return
-			}
-			attr.data = t
-		case []byte:
-			t := v.([]byte)
-			if len(t) != 4 {
-				err = fmt.Errorf("Invalid attr value")
-				return
-			}
-			attr.data = t
-		default:
-			err = fmt.Errorf("Invalid attr value")
-			return
-		}
-	case zdict.TypeInt:
-		switch v.(type) {
-		case int:
-			t := uint32(v.(int))
-			attr.data = make([]byte, 4)
-			binary.BigEndian.PutUint32(attr.data, t)
-		case uint32:
-			t := v.(uint32)
-			attr.data = make([]byte, 4)
-			binary.BigEndian.PutUint32(attr.data, t)
-		default:
-			err = fmt.Errorf("Invalid attr value")
-			return
-		}
-	}
-	return
+	return pkt.AddAttrRaw(name, t)
 }
