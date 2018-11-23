@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"sync"
 
 	"github.com/andrewz1/zradius/zdict"
 )
@@ -13,14 +12,6 @@ import (
 const (
 	MinPLen = 20   // Min packet len
 	MaxPLen = 4096 // Max packet len
-)
-
-var (
-	bufPool = &sync.Pool{
-		New: func() interface{} {
-			return make([]byte, MaxPLen)
-		},
-	}
 )
 
 // RadNewPkt - создание нового пакета
@@ -83,11 +74,6 @@ func (pkt *Packet) GetNasU32() uint32 {
 		return 0
 	}
 	return binary.BigEndian.Uint32(ip4)
-}
-
-// GetCode - возвращает код пакета (тип)
-func (pkt *Packet) GetCode() byte {
-	return pkt.code
 }
 
 // GetAttrByName - поиск аттрибута в пакете по имени

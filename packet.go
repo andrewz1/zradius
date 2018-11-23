@@ -249,3 +249,8 @@ func (pkt *Packet) SetSecret(v interface{}) {
 		pkt.secret = v.([]byte)
 	}
 }
+
+// GetCode - get Radius packet code
+func (pkt *Packet) GetCode() byte {
+	return pkt.code
+}
