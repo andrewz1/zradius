@@ -31,9 +31,9 @@ var (
 )
 
 func getPBuf() []byte {
-	var r []byte
-	if r = pbPool.Get().([]byte); r != nil {
-		return r[:MaxPLen]
+	var v interface{}
+	if v = pbPool.Get(); v != nil {
+		return v.([]byte)[:MaxPLen]
 	}
 	return make([]byte, MaxPLen)
 }
