@@ -279,7 +279,8 @@ func (pkt *Packet) GetAttr(name string) *Attr {
 	return nil
 }
 
-func (pkt *Packet) AddAttr(name string, v interface{}) error {
+// AddAttr - add Attr to packet
+func (pkt *Packet) AddAttr(name string, v interface{}) (err error) {
 	var (
 		ad   *zdict.AttrData
 		attr *Attr
@@ -294,19 +295,62 @@ func (pkt *Packet) AddAttr(name string, v interface{}) error {
 		vtyp: ad.Vtyp,
 		atyp: ad,
 	}
-	defer attr.updateLen()
+	defer func() {
+		if err == nil {
+			attr.updateLen()
+			pkt.attr = append(pkt.attr, attr)
+		}
+	}()
 	if v == nil {
-		return nil
+		return
 	}
 	switch ad.Dtyp {
 	case zdict.TypeRaw:
-		if t, ok := v.([]byte); ok {
-			attr.data = t
-		}
+		fallthrough
 	case zdict.TypeString:
-		if t, ok := v.([]byte); ok {
+		switch v.(type) {
+		case []byte:
+			attr.data = v.([]byte)
+		case string:
+			attr.data = []byte(v.(string))
+		default:
+			err = fmt.Errorf("Invalid attr value")
+			return
+		}
+	case zdict.TypeIP4:
+		switch v.(type) {
+		case *net.IP:
+			t := v.(*net.IP).To4()
+			if t == nil {
+				err = fmt.Errorf("Invalid attr value")
+				return
+			}
 			attr.data = t
+		case []byte:
+			t := v.([]byte)
+			if len(t) != 4 {
+				err = fmt.Errorf("Invalid attr value")
+				return
+			}
+			attr.data = t
+		default:
+			err = fmt.Errorf("Invalid attr value")
+			return
+		}
+	case zdict.TypeInt:
+		switch v.(type) {
+		case int:
+			t := uint32(v.(int))
+			attr.data = make([]byte, 4)
+			binary.BigEndian.PutUint32(attr.data, t)
+		case uint32:
+			t := v.(uint32)
+			attr.data = make([]byte, 4)
+			binary.BigEndian.PutUint32(attr.data, t)
+		default:
+			err = fmt.Errorf("Invalid attr value")
+			return
 		}
 	}
-	return nil
+	return
 }
