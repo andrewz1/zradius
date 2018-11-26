@@ -298,9 +298,23 @@ func (pkt *Packet) AddAttrRaw(name string, val []byte) error {
 	return nil
 }
 
+// MustAddAttrRaw - add raw Attr to packet
+func (pkt *Packet) MustAddAttrRaw(name string, val []byte) {
+	if err := pkt.AddAttrRaw(name, val); err != nil {
+		panic(err)
+	}
+}
+
 // AddAttrStr - add string Attr to packet
 func (pkt *Packet) AddAttrStr(name, val string) error {
 	return pkt.AddAttrRaw(name, []byte(val))
+}
+
+// MustAddAttrStr - add string Attr to packet
+func (pkt *Packet) MustAddAttrStr(name, val string) {
+	if err := pkt.AddAttrStr(name, val); err != nil {
+		panic(err)
+	}
 }
 
 // AddAttrInt - add int Attr to packet
@@ -311,6 +325,13 @@ func (pkt *Packet) AddAttrInt(name string, val uint32) error {
 	return pkt.AddAttrRaw(name, t[:])
 }
 
+// MustAddAttrInt - add int Attr to packet
+func (pkt *Packet) MustAddAttrInt(name string, val uint32) {
+	if err := pkt.AddAttrInt(name, val); err != nil {
+		panic(err)
+	}
+}
+
 // AddAttrIP4 - add IPv4 Attr to packet
 func (pkt *Packet) AddAttrIP4(name string, val net.IP) error {
 	t := val.To4()
@@ -318,4 +339,11 @@ func (pkt *Packet) AddAttrIP4(name string, val net.IP) error {
 		return fmt.Errorf("Argument is not IPv4")
 	}
 	return pkt.AddAttrRaw(name, t)
+}
+
+// MustAddAttrIP4 - add IPv4 Attr to packet
+func (pkt *Packet) MustAddAttrIP4(name string, val net.IP) {
+	if err := AddAttrIP4(name, val); err != nil {
+		panic(err)
+	}
 }
