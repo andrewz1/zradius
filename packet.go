@@ -343,7 +343,7 @@ func (pkt *Packet) AddAttrIP4(name string, val net.IP) error {
 
 // MustAddAttrIP4 - add IPv4 Attr to packet
 func (pkt *Packet) MustAddAttrIP4(name string, val net.IP) {
-	if err := AddAttrIP4(name, val); err != nil {
+	if err := pkt.AddAttrIP4(name, val); err != nil {
 		panic(err)
 	}
 }
