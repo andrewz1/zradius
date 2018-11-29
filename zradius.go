@@ -55,6 +55,12 @@ func (pkt *Packet) Send() (err error) {
 	return err
 }
 
+// SendConn - отправка пакета в сеть (connected)
+func (pkt *Packet) SendConn() (err error) {
+	_, err = pkt.conn.Write(pkt.data)
+	return err
+}
+
 // GetNasIP - возвращает NASIP как net.IP
 func (pkt *Packet) GetNasIP() net.IP {
 	return pkt.addr.IP
