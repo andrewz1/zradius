@@ -14,13 +14,6 @@ const (
 	MaxPLen = 4096 // Max packet len
 )
 
-// RadNewPkt - создание нового пакета
-func RadNewPkt(code byte) *Packet {
-	return &Packet{
-		code: code,
-	}
-}
-
 // String - печать пакета
 func (pkt *Packet) String() string {
 	var (

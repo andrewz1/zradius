@@ -8,6 +8,7 @@ import (
 	"hash"
 	"net"
 	"sync"
+	"sync/atomic"
 
 	"github.com/andrewz1/zradius/zdict"
 )
@@ -28,6 +29,7 @@ type Packet struct {
 
 var (
 	pbPool sync.Pool
+	radID  uint32
 )
 
 func getPBuf() []byte {
@@ -40,6 +42,14 @@ func getPBuf() []byte {
 
 func putPBuf(b []byte) {
 	pbPool.Put(b)
+}
+
+// RadNew - create new packet with given code
+func RadNew(code byte) *Packet {
+	return &Packet{
+		code: code,
+		id:   byte(atomic.AddUint32(&radID, 1)),
+	}
 }
 
 // RadRecv - receive Radius packet from conn and check packet len
