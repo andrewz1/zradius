@@ -265,9 +265,19 @@ func (pkt *Packet) SetAddr(addr *net.UDPAddr) {
 	pkt.addr = addr
 }
 
+// GetAddr - get Addr from Packet
+func (pkt *Packet) GetAddr() *net.UDPAddr {
+	return pkt.addr
+}
+
 // SetConn - set Conn in Packet
 func (pkt *Packet) SetConn(conn *net.UDPConn) {
 	pkt.conn = conn
+}
+
+// GetConn - get Conn from Packet
+func (pkt *Packet) GetConn() *net.UDPConn {
+	return pkt.conn
 }
 
 // GetCode - get Radius packet code
