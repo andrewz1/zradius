@@ -260,6 +260,16 @@ func (pkt *Packet) SetSecretStr(s string) {
 	pkt.secret = []byte(s)
 }
 
+// SetAddr - set Addr in Packet
+func (pkt *Packet) SetAddr(addr *net.UDPAddr) {
+	pkt.addr = addr
+}
+
+// SetConn - set Conn in Packet
+func (pkt *Packet) SetConn(conn *net.UDPConn) {
+	pkt.conn = conn
+}
+
 // GetCode - get Radius packet code
 func (pkt *Packet) GetCode() byte {
 	return pkt.code
