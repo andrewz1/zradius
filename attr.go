@@ -66,6 +66,7 @@ func (attr *Attr) decryptUsr(pkt *Packet) {
 		s = l
 	}
 	attr.data = dst[:s]
+	attr.len = byte(s + 2)
 }
 
 // GetData - return raw attr data
